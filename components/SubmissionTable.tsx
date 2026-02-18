@@ -113,7 +113,7 @@ const SubmissionTable: React.FC<Props> = ({ submissions, onEdit, onDelete }) => 
                   <td className="px-6 py-5 text-center">
                     {sub.status === 'synced' ? (
                       <div className="inline-flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full text-[9px] font-black border border-emerald-100 uppercase">
-                        <CloudCheck size={12} /> Tersinkron
+                        <CheckCircle size={12} /> Tersinkron
                       </div>
                     ) : (
                       <div className="inline-flex items-center gap-1.5 text-amber-600 bg-amber-50 px-3 py-1 rounded-full text-[9px] font-black border border-amber-100 uppercase">
