@@ -5,7 +5,7 @@ import EnvironmentPlugin from 'vite-plugin-environment';
 
 export default defineConfig({
   // Menyesuaikan dengan nama repository baru Anda
-  base: '/risikohubla/', 
+  base: '/', 
   plugins: [
     react(),
     EnvironmentPlugin({
