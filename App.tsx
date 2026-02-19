@@ -30,7 +30,7 @@ import * as XLSX from 'xlsx';
 
 // --- CONFIGURASI SERAGAM (Ubah di sini jika ada update) ---
 const DEFAULT_SHEET = "https://docs.google.com/spreadsheets/d/1B7HDiDeYgH-0HH-pmS2PTwNwbRyv--NltwncBFSSHGI/edit?gid=65972281#gid=65972281";
-const DEFAULT_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz1dtQLUCxztuKC0yHsRW-lddriC-iibjRC51lCzTEPN6Ro5d3LBzOc8ifEM92jU3dTNA/exec"; // 
+const DEFAULT_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz1dtQLUCxztuKC0yHsRW-lddriC-iibjRC51lCzTEPN6Ro5d3LBzOc8ifEM92jU3dTNA/exec"; 
 const TEMPLATE_PASSWORD = "123456";
 
 const RISK_MATRIX_SCORES = [
@@ -306,22 +306,41 @@ const App: React.FC = () => {
 
   const handleExportDraftExcel = () => {
     if (currentBatch.length === 0) return alert("Daftar draft kosong.");
+    
+    // EXPORT LENGKAP - SEMUA KOLOM
     const dataToExport = currentBatch.map(s => ({
       'Unit Kerja': s.unitKerja,
       'Tahun': s.tahun,
-      'Sasaran': s.sasaran,
-      'Indikator': s.indikator,
+      'Sasaran Strategis': s.sasaran,
+      'Indikator Kinerja (IKK)': s.indikator,
+      'Selera Risiko': s.seleraRisiko,
       'Proses Bisnis': s.prosesBisnis,
-      'Peristiwa': s.peristiwa,
-      'Penyebab': s.penyebab,
-      'Dampak': s.dampak,
-      'Skor': s.besaranRisiko,
-      'Level': s.levelRisiko
+      'Aktivitas': s.aktivitas,
+      'Kategori Penyebab': s.kategoriPenyebab,
+      'Peristiwa Risiko': s.peristiwa,
+      'Penyebab Risiko': s.penyebab,
+      'Dampak Risiko': s.dampak,
+      'Kategori Risiko': s.kategoriRisiko,
+      'Sistem Pengendalian': s.sistemPengendalian,
+      'Skor Frekuensi': s.frekuensiScore,
+      'Skor Dampak': s.dampakScore,
+      'Besaran Risiko (Total)': s.besaranRisiko,
+      'Level Risiko': s.levelRisiko,
+      'Status Mitigasi': s.mitigasiStatus,
+      'Rencana Penanganan': s.rencanaPenanganan,
+      'Output Penanganan': s.outputPenanganan,
+      'Timestamp Input': s.timestamp
     }));
+
     const ws = XLSX.utils.json_to_sheet(dataToExport);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Draft Risiko");
-    XLSX.writeFile(wb, `Draft_Risiko_${unitKerja}_${new Date().toISOString().split('T')[0]}.xlsx`);
+    
+    // Auto-width adjustment simple logic
+    const wscols = Object.keys(dataToExport[0]).map(() => ({ wch: 25 }));
+    ws['!cols'] = wscols;
+
+    XLSX.utils.book_append_sheet(wb, ws, "Draft Risiko Lengkap");
+    XLSX.writeFile(wb, `Draft_Profil_Risiko_Lengkap_${unitKerja}_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const handleExportDraftPDF = () => {
@@ -746,60 +765,71 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            <div className="lg:col-span-4 space-y-8">
-               <div className="bg-white border border-slate-200 rounded-[2rem] p-8 shadow-sm sticky top-28 border-t-8 border-t-blue-600 flex flex-col min-h-[600px]">
-                  <div className="flex items-center justify-between mb-8 pb-6 border-b border-slate-100">
-                     <div>
-                        <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2"><ListChecks size={18} className="text-blue-600" /> Daftar Risiko Terpilih</h3>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-wider">{currentBatch.length} Risiko Baru</p>
-                     </div>
+            {/* SIDEBAR FIXED HEIGHT SCROLLABLE */}
+            <div className="lg:col-span-4 sticky top-28">
+               <div className="bg-white border border-slate-200 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] overflow-hidden flex flex-col h-[calc(100vh-140px)]">
+                  {/* Header Sidebar */}
+                  <div className="p-8 border-t-8 border-t-blue-600">
+                    <div className="flex items-center gap-3 mb-1">
+                       <ListChecks className="text-blue-600" size={20} />
+                       <h3 className="font-black text-slate-900 text-sm">Daftar Risiko Terpilih</h3>
+                    </div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{currentBatch.length} RISIKO BARU</p>
+                    <div className="h-px bg-slate-100 mt-6" />
                   </div>
 
-                  {currentBatch.length === 0 ? (
-                    <div className="flex-1 flex flex-col items-center justify-center opacity-40 italic text-xs text-center p-10">
-                       <History size={32} className="mb-4 text-slate-200" />
-                       <p className="text-[10px] font-black uppercase tracking-widest text-slate-300">Belum ada risiko dipilih</p>
-                    </div>
-                  ) : (
-                    <div className="flex-1 space-y-4 mb-8 overflow-y-auto pr-2 custom-scrollbar">
-                       {currentBatch.map((item) => (
-                         <div key={item.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-start justify-between relative group hover:bg-blue-50/30 transition-colors">
-                            <div className="flex-1 min-w-0 pr-3">
-                               <p className="text-[10px] font-bold text-blue-600 truncate uppercase tracking-tighter mb-1">{item.sasaran}</p>
-                               <p className="text-[12px] font-medium text-slate-700 line-clamp-2 italic leading-tight mb-2">"{item.peristiwa}"</p>
-                               <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${getRiskLevelDetail(item.besaranRisiko).color} text-white`}>Score: {item.besaranRisiko}</span>
-                            </div>
+                  {/* Scrollable Content */}
+                  <div className="flex-1 overflow-y-auto px-8 pb-8 custom-scrollbar space-y-4">
+                     {currentBatch.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-20 opacity-20">
+                           <History size={48} className="mb-4" />
+                           <p className="text-[10px] font-black uppercase tracking-widest text-center">Belum ada risiko dipilih</p>
+                        </div>
+                     ) : (
+                       currentBatch.map((item) => (
+                         <div key={item.id} className="p-6 bg-slate-50/50 border border-slate-100 rounded-3xl group relative hover:bg-blue-50/20 transition-all">
                             <button 
                               onClick={()=>setCurrentBatch(currentBatch.filter(b=>b.id!==item.id))} 
-                              className="text-slate-300 hover:text-red-500 transition-colors"
+                              className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors"
                             >
                               <Trash2 size={16} />
                             </button>
+                            {/* IKK (INDIKATOR) SEBAGAI HEADER BERWARNA BIRU */}
+                            <p className="text-[11px] font-black text-blue-600 uppercase mb-3 pr-6 leading-relaxed line-clamp-2">
+                              {item.indikator}
+                            </p>
+                            <p className="text-xs font-medium text-slate-500 italic mb-4 leading-relaxed line-clamp-2">
+                               "{item.peristiwa}"
+                            </p>
+                            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black ${getRiskLevelDetail(item.besaranRisiko).color} text-white shadow-sm`}>
+                               Score: {item.besaranRisiko}
+                            </div>
                          </div>
-                       ))}
-                    </div>
-                  )}
+                       ))
+                     )}
+                  </div>
 
-                  <div className="space-y-3 pt-6 border-t border-slate-100">
+                  {/* Fixed Bottom Buttons */}
+                  <div className="p-8 border-t border-slate-100 bg-white space-y-3">
                     <button 
                       disabled={currentBatch.length === 0 && submissions.filter(s=>s.status==='draft').length === 0 || isSyncing}
                       onClick={syncToCloud}
-                      className="w-full bg-slate-900 disabled:bg-slate-100 text-white py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl flex items-center justify-center gap-3 hover:bg-black transition-all active:scale-[0.98]"
+                      className="w-full bg-[#111827] disabled:bg-slate-100 text-white py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl flex items-center justify-center gap-3 hover:bg-black transition-all active:scale-[0.98]"
                     >
                       {isSyncing ? <Loader2 size={18} className="animate-spin" /> : <CloudUpload size={18} />}
-                      Kirim ke Cloud
+                      KIRIM KE CLOUD
                     </button>
                     
                     <div className="grid grid-cols-2 gap-3">
                        <button 
                         onClick={handleExportDraftExcel}
-                        className="flex-1 bg-emerald-50 text-emerald-600 border border-emerald-100 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-600 hover:text-white transition-all"
+                        className="flex-1 bg-emerald-50 text-emerald-600 border border-emerald-100 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
                        >
-                         <FileSpreadsheet size={16} /> Excel
+                         <FileSpreadsheet size={16} /> EXCEL
                        </button>
                        <button 
                         onClick={handleExportDraftPDF}
-                        className="flex-1 bg-slate-100 text-slate-600 border border-slate-200 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-900 hover:text-white transition-all"
+                        className="flex-1 bg-slate-50 text-slate-600 border border-slate-200 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-900 hover:text-white transition-all shadow-sm"
                        >
                          <FileText size={16} /> PDF
                        </button>
